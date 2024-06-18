@@ -18,11 +18,13 @@ var connectionPool map[string][]*websocket.Conn = make(map[string][]*websocket.C
 func WebsocketHandler(c echo.Context) error {
 	config := newConfig()
 	conn, err := websocket.Accept(c.Response(), c.Request(), config)
-	defer conn.Close(websocket.CloseStatus(err), "ending connection")
 	if err != nil {
 		return err
 	}
+	defer conn.Close(websocket.CloseStatus(err), "ending connection")
 
+	netConn := websocket.NetConn(c.Request().Context(), conn, 1)
+	fmt.Println("Group Connection established with", netConn.RemoteAddr().String())
 	for {
 		msgType, buffer, err := conn.Read(c.Request().Context())
 		if err != nil {
@@ -40,10 +42,12 @@ func GroupChatHandler(c echo.Context) error {
 	groupid := c.Param("groupid")
 	config := newConfig()
 	conn, err := websocket.Accept(c.Response(), c.Request(), config)
-	defer conn.Close(websocket.CloseStatus(err), "ending connection")
 	if err != nil {
 		return err
 	}
+
+	netConn := websocket.NetConn(c.Request().Context(), conn, 1)
+	fmt.Println("Connection established with", netConn.RemoteAddr().String())
 
 	connectionPool[groupid] = append(connectionPool[groupid], conn)
 

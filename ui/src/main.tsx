@@ -4,10 +4,9 @@ import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
-import App from './App.tsx'
-import Message from './components/Message.tsx';
+import App from './App.tsx';
+import GroupChat from './components/Groupchat.tsx';
 import './index.css'
-import Contact from './components/Contact.tsx';
 
 const router = createBrowserRouter([
   {
@@ -15,19 +14,13 @@ const router = createBrowserRouter([
     element: <App />
   },
   {
-    path: "/next",
-    element: <Message />,
 
-    children: [
-      {
-        path: "contacts/:contactid",
-        element: <Contact />,
-        loader: async function loader({ params }) {
-          return params.contactid
-        }
-      }
-    ]
-  },
+    path: "/group-chat/:groupid",
+    element: <GroupChat />,
+    loader: async function loader({ params }) {
+      return params.groupid
+    }
+  }
 ])
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

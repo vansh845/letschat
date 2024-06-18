@@ -28,7 +28,7 @@ function App() {
 
   return (
     <>
-      <Link to="/group-chat">Go to group chat</Link>
+      <Link to={`/group-chat/${crypto.randomUUID()}`}>Go to group chat</Link>
       <input type="text" className="txt" onChange={e => setInputMsg((e.target as HTMLInputElement).value)} value={inputMsg} />
       <button onClick={sendMessage}  >Send</button>
       <ul className="messages" style={{ listStyleType: "none" }}>
