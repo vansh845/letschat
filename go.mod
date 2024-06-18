@@ -2,7 +2,10 @@ module github.com/vansh845/letschat
 
 go 1.22.3
 
-require github.com/labstack/echo/v4 v4.12.0
+require (
+	github.com/labstack/echo/v4 v4.12.0
+	nhooyr.io/websocket v1.8.11
+)
 
 require (
 	github.com/labstack/gommon v0.4.2 // indirect

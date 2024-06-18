@@ -6,7 +6,7 @@ function App() {
   const [inputMsg, setInputMsg] = useState("");
   const [socket, setSocket] = useState<WebSocket | null>(null);
   useEffect(() => {
-    var ws = new WebSocket("http://localhost:3000/ws")
+    var ws = new WebSocket("http://localhost:3000/chat")
     ws.onopen = (_) => setSocket(ws)
 
   }, [])
@@ -28,7 +28,7 @@ function App() {
 
   return (
     <>
-      <Link to="/next">Go to next</Link>
+      <Link to="/group-chat">Go to group chat</Link>
       <input type="text" className="txt" onChange={e => setInputMsg((e.target as HTMLInputElement).value)} value={inputMsg} />
       <button onClick={sendMessage}  >Send</button>
       <ul className="messages" style={{ listStyleType: "none" }}>
