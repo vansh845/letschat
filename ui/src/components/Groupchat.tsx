@@ -9,7 +9,7 @@ export default function GroupChat() {
     const socketRef = useRef<WebSocket | null>(null);
     useEffect(() => {
         if (!socketRef.current) {
-            socketRef.current = new WebSocket("http://127.0.0.1:3000/group" + groupid)
+            socketRef.current = new WebSocket("/group" + groupid)
         }
         socketRef.current.onmessage = (e) => {
             setMessages(prev => [...prev, e.data])

@@ -12,7 +12,7 @@ function App() {
 
   useEffect(() => {
     if (!socketRef.current) {
-      socketRef.current = new WebSocket("http://127.0.0.1:3000/chat")
+      socketRef.current = new WebSocket("/chat")
 
     }
     socketRef.current.onmessage = (e) => {
