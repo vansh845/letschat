@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom";
+import { v4 as uuidv4 } from 'uuid';
+
 
 function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const [inputMsg, setInputMsg] = useState("");
   const socketRef = useRef<WebSocket | null>(null);
   const [roomId, setRoomId] = useState("");
+
 
   useEffect(() => {
     if (!socketRef.current) {
@@ -15,6 +18,7 @@ function App() {
     socketRef.current.onmessage = (e) => {
       setMessages(prev => [...prev, e.data])
     }
+
 
   }, [])
 
@@ -37,7 +41,7 @@ function App() {
       <Link to={`/static/group-chat/${roomId}`}>Enter group</Link>
       <input type="text" className="gotogroup" value={roomId} onChange={e => setRoomId(e.target.value)} />
       <hr />
-      <Link to={`group-chat/${crypto.randomUUID()}`}>Go to group chat</Link>
+      <Link to={`group-chat/${uuidv4()}`}>Go to group chat</Link>
       <input type="text" className="txt" onChange={e => setInputMsg((e.target as HTMLInputElement).value)} value={inputMsg} />
       <button onClick={sendMessage}  >Send</button>
       <ul className="messages" style={{ listStyleType: "none" }}>
