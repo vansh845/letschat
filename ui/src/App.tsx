@@ -5,6 +5,7 @@ function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const [inputMsg, setInputMsg] = useState("");
   const socketRef = useRef<WebSocket | null>(null);
+  const [roomId, setRoomId] = useState("");
 
   useEffect(() => {
     if (!socketRef.current) {
@@ -33,12 +34,16 @@ function App() {
 
   return (
     <>
-      <Link to={`/group-chat/${crypto.randomUUID()}`}>Go to group chat</Link>
+      <Link to={`/static/group-chat/${roomId}`}>Enter group</Link>
+      <input type="text" className="gotogroup" value={roomId} onChange={e => setRoomId(e.target.value)} />
+      <hr />
+      <Link to={`group-chat/${crypto.randomUUID()}`}>Go to group chat</Link>
       <input type="text" className="txt" onChange={e => setInputMsg((e.target as HTMLInputElement).value)} value={inputMsg} />
       <button onClick={sendMessage}  >Send</button>
       <ul className="messages" style={{ listStyleType: "none" }}>
         {messages.map((message, i) => <li key={i}>{message}</li>)}
       </ul>
+
 
     </>
   )

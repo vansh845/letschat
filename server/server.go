@@ -7,7 +7,7 @@ import (
 
 func Start(port string) {
 	e := echo.New()
-	e.Static("/", "ui/dist")
+	e.Static("/static", "ui/dist")
 	e.Static("/assets", "ui/dist/assets")
 
 	e.GET("/chat", ws.WebsocketHandler)

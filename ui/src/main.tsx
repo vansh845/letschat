@@ -8,19 +8,21 @@ import App from './App.tsx';
 import GroupChat from './components/Groupchat.tsx';
 import './index.css'
 
+
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <App />
+    path: "/static",
+    element: <App />,
   },
   {
-
-    path: "/group-chat/:groupid",
+    path: "/static/group-chat/:groupid",
     element: <GroupChat />,
     loader: async function loader({ params }) {
       return params.groupid
     }
   }
+
+
 ])
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
