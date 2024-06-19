@@ -16,7 +16,7 @@ func Start(port string) {
 
 	logger := func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			fmt.Println(c.Request().RemoteAddr)
+			fmt.Println("remote addr", c.Request().RemoteAddr)
 			return next(c)
 		}
 	}
