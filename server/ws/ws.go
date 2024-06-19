@@ -13,6 +13,8 @@ func newConfig() *websocket.AcceptOptions {
 	}
 }
 
+var writeCounter = 0
+
 var connectionPool map[string][]*websocket.Conn = make(map[string][]*websocket.Conn)
 
 func WebsocketHandler(c echo.Context) error {
@@ -24,7 +26,7 @@ func WebsocketHandler(c echo.Context) error {
 	defer conn.Close(websocket.CloseStatus(err), "ending connection")
 
 	netConn := websocket.NetConn(c.Request().Context(), conn, 1)
-	fmt.Println("Group Connection established with", netConn.RemoteAddr().String())
+	fmt.Println("Connection established with", netConn.RemoteAddr().String())
 	for {
 		msgType, buffer, err := conn.Read(c.Request().Context())
 		if err != nil {
@@ -34,6 +36,8 @@ func WebsocketHandler(c echo.Context) error {
 		fmt.Println(msgType, c.Request().RemoteAddr, resp)
 
 		conn.Write(c.Request().Context(), msgType, []byte(fmt.Sprintf("echoing... %s", resp)))
+		writeCounter++
+		fmt.Println(writeCounter)
 	}
 
 }
@@ -47,11 +51,12 @@ func GroupChatHandler(c echo.Context) error {
 	}
 
 	netConn := websocket.NetConn(c.Request().Context(), conn, 1)
-	fmt.Println("Connection established with", netConn.RemoteAddr().String())
+	fmt.Println("Group Connection established ", netConn.RemoteAddr().String())
 
 	connectionPool[groupid] = append(connectionPool[groupid], conn)
 
 	for {
+		fmt.Printf("size of room %d\n", len(connectionPool[groupid]))
 		msgType, buffer, err := conn.Read(c.Request().Context())
 		if err != nil {
 			panic(err)
@@ -59,8 +64,9 @@ func GroupChatHandler(c echo.Context) error {
 		resp := string(buffer)
 		fmt.Println(msgType, c.Request().RemoteAddr, resp)
 		for _, resConn := range connectionPool[groupid] {
-
+			// if websocket.NetConn(context.Background(), resConn, websocket.MessageText).RemoteAddr().String() != netConn.RemoteAddr().String() {
 			resConn.Write(c.Request().Context(), msgType, []byte(fmt.Sprintf("echoing... %s", resp)))
+			// }
 		}
 	}
 }

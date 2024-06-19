@@ -1,26 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLoaderData } from "react-router-dom";
 
 export default function GroupChat() {
     const groupid = useLoaderData();
     const [messages, setMessages] = useState<string[]>([]);
     const [inputMsg, setInputMsg] = useState("");
-    const [socket, setSocket] = useState<WebSocket | null>(null);
+    const socketRef = useRef<WebSocket | null>(null);
     useEffect(() => {
-        var ws = new WebSocket("http://localhost:3000/group/" + groupid)
-        ws.onopen = (_) => setSocket(ws)
-
+        if (!socketRef.current) {
+            socketRef.current = new WebSocket("http://localhost:3000/group/" + groupid)
+        }
+        socketRef.current.onmessage = (e) => {
+            setMessages(prev => [...prev, e.data])
+        }
     }, [])
 
-    useEffect(() => {
-        socket?.addEventListener("message", (e) => {
-            setMessages((prev) => [...prev, e.data])
-        })
-    }, [socket])
 
     function sendMessage() {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(inputMsg);
+        if (socketRef && socketRef.current?.readyState === WebSocket.OPEN) {
+            socketRef.current?.send(inputMsg);
             setInputMsg('');
         }
     }
@@ -31,7 +29,7 @@ export default function GroupChat() {
         <>
             <Link to='/'>Home</Link>
             <input type="text" className="txt" onChange={e => setInputMsg((e.target as HTMLInputElement).value)} value={inputMsg} />
-            <button onClick={sendMessage}  >Send</button>
+            <button onClick={sendMessage} >Send</button>
             <ul className="messages" style={{ listStyleType: "none" }}>
                 {messages.map(message => <li>{message}</li>)}
             </ul>

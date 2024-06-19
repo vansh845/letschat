@@ -1,25 +1,30 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom";
 
 function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const [inputMsg, setInputMsg] = useState("");
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
+
   useEffect(() => {
-    var ws = new WebSocket("http://localhost:3000/chat")
-    ws.onopen = (_) => setSocket(ws)
+    if (!socketRef.current) {
+      socketRef.current = new WebSocket("http://localhost:3000/chat")
+
+    }
+    socketRef.current.onmessage = (e) => {
+      setMessages(prev => [...prev, e.data])
+    }
 
   }, [])
 
   useEffect(() => {
-    socket?.addEventListener("message", (e) => {
-      setMessages((prev) => [...prev, e.data])
-    })
-  }, [socket])
+    console.log(messages)
+  }, [messages])
+
 
   function sendMessage() {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(inputMsg);
+    if (socketRef.current && socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(inputMsg);
       setInputMsg('');
     }
   }
@@ -32,8 +37,9 @@ function App() {
       <input type="text" className="txt" onChange={e => setInputMsg((e.target as HTMLInputElement).value)} value={inputMsg} />
       <button onClick={sendMessage}  >Send</button>
       <ul className="messages" style={{ listStyleType: "none" }}>
-        {messages.map(message => <li>{message}</li>)}
+        {messages.map((message, i) => <li key={i}>{message}</li>)}
       </ul>
+
     </>
   )
 }
