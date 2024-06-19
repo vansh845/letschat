@@ -4,11 +4,13 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/vansh845/letschat/server/ws"
 )
 
 func Start(port string) {
 	e := echo.New()
+	e.Use(middleware.Logger())
 	e.Static("/static", "ui/dist")
 	e.Static("/assets", "ui/dist/assets")
 
