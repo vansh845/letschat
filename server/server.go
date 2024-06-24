@@ -11,7 +11,7 @@ import (
 func Start(port string) {
 
 	e := echo.New()
-	e.Static("/static", "ui/dist")
+	e.Static("/app", "ui/dist")
 	e.Static("/assets", "ui/dist/assets")
 
 	logger := func(next echo.HandlerFunc) echo.HandlerFunc {
