@@ -3,7 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { ChangeEvent, MouseEvent, useEffect, useRef, useState } from "react"
 import { MoveHorizontalIcon, PaperclipIcon, SearchIcon, SendIcon } from "./ui/icons";
 import { Input } from "./ui/input";
-import { useLoaderData, useLocation } from "react-router-dom";
+import { useLoaderData } from "react-router-dom";
 
 type message = {
     message: string,
@@ -17,13 +17,12 @@ type message = {
 export default function Chat() {
     const { params } = useLoaderData() as { params: string };
     const [data, setData] = useState<message[]>([]);
-    const location = useLocation();
     const socketRef = useRef<WebSocket | null>(null);
     useEffect(() => {
         if (!socketRef.current) {
             socketRef.current = new WebSocket("http://localhost:3000/chat");
         }
-        socketRef.current.onopen = (e) => {
+        socketRef.current.onopen = (_) => {
             console.log("connection established")
             if (localStorage.getItem('rooms') != null) {
                 const rooms = JSON.parse(localStorage.getItem('rooms')!) as string[]
@@ -64,7 +63,7 @@ export default function Chat() {
                         <AvatarFallback>JD</AvatarFallback>
                     </Avatar>
                     <div>
-                        <h4 className="font-medium">John Doe</h4>
+                        <h4 className="font-medium">Vansh Koul</h4>
                         <p className="text-sm text-muted-foreground">Online</p>
                     </div>
                 </div>

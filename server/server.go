@@ -31,7 +31,10 @@ func Start(port string) {
 	// 		return next(c)
 	// 	}
 	// }
-
+	e.GET("/", func(c echo.Context) error {
+		http.Redirect(c.Response(), c.Request(), "/app", http.StatusPermanentRedirect)
+		return nil
+	})
 	e.GET("/chat", handleMessages)
 	e.GET("/group/:groupid", ws.GroupChatHandler)
 	e.GET("/ping", func(c echo.Context) error {

@@ -57,7 +57,7 @@ function JoinGroup() {
     setRoomId(e.target.value)
   }
 
-  function handleJoinRoom(e: MouseEvent<HTMLButtonElement>) {
+  function handleJoinRoom(_: MouseEvent<HTMLButtonElement>) {
 
     const rooms = localStorage.getItem("rooms")
     if (rooms == null) {
