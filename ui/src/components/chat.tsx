@@ -1,8 +1,3 @@
-/**
- * v0 by Vercel.
- * @see https://v0.dev/t/8gAgXL8gLi7
- * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
- */
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { ChangeEvent, MouseEvent, useEffect, useRef, useState } from "react"
@@ -14,8 +9,10 @@ type message = {
     message: string,
     timeStamp: number,
     roomid: string,
-    type: "recieved" | "sent"
+    type: "recieved" | "sent" | "initial",
+    rooms: string[]
 }
+
 
 export default function Chat() {
     const { params } = useLoaderData() as { params: string };
@@ -26,10 +23,18 @@ export default function Chat() {
         if (!socketRef.current) {
             socketRef.current = new WebSocket("http://localhost:3000/chat");
         }
+        socketRef.current.onopen = (e) => {
+            console.log("connection established")
+            if (localStorage.getItem('rooms') != null) {
+                const rooms = JSON.parse(localStorage.getItem('rooms')!) as string[]
+                const initialMessage: message = { message: "", roomid: "", rooms: rooms, timeStamp: Date.now(), type: "initial" }
+                socketRef.current?.send(JSON.stringify(initialMessage))
+            }
+        }
         socketRef.current.onmessage = (e) => {
             const recievedMessage = JSON.parse(e.data) as message
-            recievedMessage.type = "recieved"
             console.log("message recieved")
+            recievedMessage.type = "recieved"
             setData(prev => [...prev, recievedMessage])
         }
 
@@ -42,12 +47,9 @@ export default function Chat() {
 
     function sendMessage(e: MouseEvent<HTMLFormElement>) {
         e.preventDefault();
-        setData(prev => [...prev, { message: messageBox, roomid: params, timeStamp: Date.now(), type: "sent" }]);
-        socketRef.current?.send(JSON.stringify({
-            message: messageBox,
-            roomid: params,
-            timeStamp: Date.now()
-        }));
+        const temp: message = { message: messageBox, roomid: params, timeStamp: Date.now(), type: "sent", rooms: [] };
+        setData(prev => [...prev, temp]);
+        socketRef.current?.send(JSON.stringify(temp));
         setMessageBox("");
 
     }
@@ -83,46 +85,6 @@ export default function Chat() {
             </div>
             <div className="flex-1 overflow-auto p-4">
                 <div className="grid gap-4">
-                    <div className="flex items-start gap-3">
-                        <Avatar className="h-8 w-8 border">
-                            <AvatarImage src="/placeholder-user.jpg" />
-                            <AvatarFallback>JD</AvatarFallback>
-                        </Avatar>
-                        <div className="rounded-lg bg-muted p-3 text-sm">
-                            <p>Hey, did you see the new design?</p>
-                            <p className="text-xs text-muted-foreground">2:30 PM</p>
-                        </div>
-                    </div>
-                    <div className="flex justify-end items-start gap-3">
-                        <div className="rounded-lg bg-primary p-3 text-sm text-primary-foreground">
-                            <p>Looks great! I love the new color scheme.</p>
-                            <p className="text-xs text-muted-foreground">2:32 PM</p>
-                        </div>
-                        <Avatar className="h-8 w-8 border">
-                            <AvatarImage src="/placeholder-user.jpg" />
-                            <AvatarFallback>AC</AvatarFallback>
-                        </Avatar>
-                    </div>
-                    <div className="flex items-start gap-3">
-                        <Avatar className="h-8 w-8 border">
-                            <AvatarImage src="/placeholder-user.jpg" />
-                            <AvatarFallback>JD</AvatarFallback>
-                        </Avatar>
-                        <div className="rounded-lg bg-muted p-3 text-sm">
-                            <p>Awesome, let's discuss the details later.</p>
-                            <p className="text-xs text-muted-foreground">2:35 PM</p>
-                        </div>
-                    </div>
-                    <div className="flex justify-end items-start gap-3">
-                        <div className="rounded-lg bg-primary p-3 text-sm text-primary-foreground">
-                            <p>Sounds good, I'm free after 4pm.</p>
-                            <p className="text-xs text-muted-foreground">2:37 PM</p>
-                        </div>
-                        <Avatar className="h-8 w-8 border">
-                            <AvatarImage src="/placeholder-user.jpg" />
-                            <AvatarFallback>AC</AvatarFallback>
-                        </Avatar>
-                    </div>
                     {data.filter(message => message.roomid == params).map((message, i) => message.type == "recieved" ? <ReceivedMessage key={i} message={message.message} /> : <SentMessage key={i} message={message.message} />)}
                 </div>
             </div>

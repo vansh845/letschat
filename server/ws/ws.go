@@ -15,9 +15,11 @@ func newConfig() *websocket.AcceptOptions {
 }
 
 type Message struct {
-	Message   string `json:"message"`
-	TimeStamp int    `json:"timestamp"`
-	Roomid    string `json:"roomid"`
+	Message   string   `json:"message"`
+	TimeStamp int      `json:"timestamp"`
+	Roomid    string   `json:"roomid"`
+	Rooms     []string `json:"rooms"`
+	Type      string   `json:"type"`
 }
 
 var connectionPool map[string][]*websocket.Conn = make(map[string][]*websocket.Conn)

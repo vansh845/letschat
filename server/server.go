@@ -62,11 +62,17 @@ func handleMessages(c echo.Context) error {
 		}
 		fmt.Println(message)
 		roomId := message.Roomid
-		connectionPool[roomId] = append(connectionPool[roomId], conn)
-		newMessage := ws.Message{Message: message.Message, TimeStamp: int(time.Now().UnixMilli()), Roomid: roomId}
-		for _, x := range connectionPool[roomId] {
-			if x.RemoteAddr() != conn.RemoteAddr() {
-				x.WriteJSON(newMessage)
+		if message.Type == "initial" {
+			for _, room := range message.Rooms {
+				connectionPool[room] = append(connectionPool[room], conn)
+			}
+		} else {
+
+			newMessage := ws.Message{Message: message.Message, TimeStamp: int(time.Now().UnixMilli()), Roomid: roomId, Rooms: []string{}, Type: "sent"}
+			for _, x := range connectionPool[roomId] {
+				if x.RemoteAddr() != conn.RemoteAddr() {
+					x.WriteJSON(newMessage)
+				}
 			}
 		}
 	}

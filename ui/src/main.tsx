@@ -15,6 +15,12 @@ const router = createBrowserRouter([
   {
     path: "/app",
     element: <App />,
+    loader: async function (): Promise<string[]> {
+      if (localStorage.getItem("rooms")) {
+        return JSON.parse(localStorage.getItem("rooms")!)
+      }
+      return []
+    },
     children: [
       {
         path: "chat/:id",
