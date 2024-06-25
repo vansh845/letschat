@@ -8,13 +8,22 @@ import {
 import App from './App.tsx';
 import GroupChat from './components/Groupchat.tsx';
 import './index.css'
-import Component from './components/v0.tsx';
+import Chat from './components/chat.tsx';
 
 
 const router = createBrowserRouter([
   {
     path: "/app",
-    element: <Component />
+    element: <App />,
+    children: [
+      {
+        path: "chat/:id",
+        element: <Chat />,
+        loader: async function ({ params }) {
+          return { params: params.id }
+        }
+      }
+    ]
   },
   {
     path: "/",
