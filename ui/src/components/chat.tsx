@@ -20,7 +20,7 @@ export default function Chat() {
     const socketRef = useRef<WebSocket | null>(null);
     useEffect(() => {
         if (!socketRef.current) {
-            socketRef.current = new WebSocket("http://localhost:3000/chat");
+            socketRef.current = new WebSocket("/chat");
         }
         socketRef.current.onopen = (_) => {
             console.log("connection established")
