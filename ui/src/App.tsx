@@ -17,7 +17,24 @@ export default function App() {
 
   const data = useLoaderData() as string[]
 
-
+  if (data == null || data.length == 0) {
+    return (
+      <div className="grid min-h-screen w-full grid-cols-[300px_1fr] ">
+        <div className="flex flex-col border-r bg-muted/40 p-4 overflow-hidden">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Chats</h2>
+            <JoinGroup />
+          </div>
+          <div className="flex-1 overflow-auto">
+            <div className="mt-4 space-y-2">
+              Looks lonely here, create or join someone.
+            </div>
+          </div>
+        </div>
+        <Outlet />
+      </div>
+    )
+  }
   return (
     <div className="grid min-h-screen w-full grid-cols-[300px_1fr] ">
       <div className="flex flex-col border-r bg-muted/40 p-4 overflow-hidden">
@@ -31,11 +48,11 @@ export default function App() {
               <Link key={i} to={`chat/${x}`} className="flex items-center gap-3 rounded-md p-2 hover:bg-muted">
                 <Avatar className="h-10 w-10 border">
                   <AvatarImage src="/placeholder-user.jpg" />
-                  <AvatarFallback>JD</AvatarFallback>
+                  <AvatarFallback>{x[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 overflow-hidden">
                   <h4 className="font-medium truncate">{x}</h4>
-                  <p className="text-sm text-muted-foreground truncate">Sounds good, let's discuss it.</p>
+                  {/* <p className="text-sm text-muted-foreground truncate">Sounds good, let's discuss it.</p> */}
                 </div>
                 <div className="text-xs text-muted-foreground">1d</div>
               </Link>
