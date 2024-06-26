@@ -17,10 +17,11 @@ type message = {
 export default function Chat() {
     const { params } = useLoaderData() as { params: string };
     const [data, setData] = useState<message[]>([]);
+    const [isClosed, setIsClosed] = useState(false);
     const socketRef = useRef<WebSocket | null>(null);
     useEffect(() => {
         if (!socketRef.current) {
-            socketRef.current = new WebSocket("/chat");
+            socketRef.current = new WebSocket("http://localhost:3000/chat");
         }
         socketRef.current.onopen = (_) => {
             console.log("connection established")
@@ -35,6 +36,9 @@ export default function Chat() {
             console.log("message recieved")
             recievedMessage.type = "recieved"
             setData(prev => [...prev, recievedMessage])
+        }
+        socketRef.current.onclose = (_) => {
+            setIsClosed(true);
         }
 
     }, [])
@@ -60,10 +64,10 @@ export default function Chat() {
                 <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border">
                         <AvatarImage src="/placeholder-user.jpg" />
-                        <AvatarFallback>JD</AvatarFallback>
+                        <AvatarFallback>{params[0].toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <h4 className="font-medium">Vansh Koul</h4>
+                        <h4 className="font-medium">{params}</h4>
                         <p className="text-sm text-muted-foreground">Online</p>
                     </div>
                 </div>
@@ -86,6 +90,7 @@ export default function Chat() {
                 <div className="grid gap-4">
                     {data.filter(message => message.roomid == params).map((message, i) => message.type == "recieved" ? <ReceivedMessage key={i} message={message.message} /> : <SentMessage key={i} message={message.message} />)}
                 </div>
+                {isClosed ? <p className="mt-2 text-center text-sm text-muted-foreground">Connection ended, please reload.</p> : ""}
             </div>
             <div className="sticky bottom-0 z-10 border-t bg-background p-4">
                 <form onSubmit={sendMessage} className="relative">
