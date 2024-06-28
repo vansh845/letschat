@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/vansh845/letschat/server"
 )
@@ -26,6 +28,14 @@ func main() {
 	}
 	defer pool.Close()
 
-	server.Start(":3000", pool)
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create an Amazon S3 service client
+	awsClient := s3.NewFromConfig(cfg)
+
+	server.Start(":3000", pool, awsClient)
 
 }

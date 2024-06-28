@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -30,7 +33,7 @@ var upgrader = websocket.Upgrader{
 }
 var connectionPool map[string][]*websocket.Conn = make(map[string][]*websocket.Conn)
 
-func Start(port string, db *pgxpool.Pool) {
+func Start(port string, db *pgxpool.Pool, awsClient *s3.Client) {
 
 	e := echo.New()
 	e.Static("/app", "ui/dist")
@@ -42,7 +45,7 @@ func Start(port string, db *pgxpool.Pool) {
 		return nil
 	})
 	e.GET("/register", handleRegisterUser(db))
-	e.GET("/chat", handleChat(db))
+	e.GET("/chat", handleChat(db, awsClient))
 	e.GET("/ping", handlePing(db))
 	e.GET("/getchats", handleGetChats(db))
 	e.GET("/getuserid", handleGetUserId(db))
@@ -148,7 +151,7 @@ func handleRegisterUser(db *pgxpool.Pool) echo.HandlerFunc {
 	}
 }
 
-func handleChat(db *pgxpool.Pool) echo.HandlerFunc {
+func handleChat(db *pgxpool.Pool, awsClient *s3.Client) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
@@ -186,6 +189,15 @@ func handleChat(db *pgxpool.Pool) echo.HandlerFunc {
 				err = txn.Commit(ctx)
 				if err != nil {
 					log.Println(err)
+				}
+
+			} else if clientMessage.Type == "image" {
+				ctx := context.Background()
+				_, err := awsClient.PutObject(ctx, &s3.PutObjectInput{
+					Bucket: aws.String(os.Getenv("odinxletschatmultimedia")),
+				})
+				if err != nil {
+					log.Println(err.Error())
 				}
 
 			} else {
