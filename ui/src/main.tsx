@@ -4,6 +4,7 @@ import {
   createBrowserRouter,
   redirect,
   RouterProvider,
+  useLoaderData,
 } from "react-router-dom";
 import App from './App.tsx';
 import GroupChat from './components/Groupchat.tsx';
@@ -15,18 +16,40 @@ const router = createBrowserRouter([
   {
     path: "/app",
     element: <App />,
-    loader: async function (): Promise<string[]> {
+    loader: async function () {
+      const res: { rooms: string[], userName: boolean, userId: number } = { rooms: [], userName: false, userId: -1 }
       if (localStorage.getItem("rooms")) {
-        return JSON.parse(localStorage.getItem("rooms")!)
+        const rooms = JSON.parse(localStorage.getItem("rooms")!)
+        res.rooms = rooms
       }
-      return []
+      if (localStorage.getItem("username")) {
+        res.userName = true
+        const temp = await fetch(`http://localhost:3000/getuserid?username=${localStorage.getItem("username")}`);
+        if (temp.status == 200) {
+          const userid = await temp.text()
+          res.userId = Number(userid)
+          localStorage.setItem("userid", userid)
+        }
+      }
+
+      return res
     },
     children: [
       {
         path: "chat/:id",
         element: <Chat />,
         loader: async function ({ params }) {
-          return { params: params.id }
+          const res = await fetch(`http://localhost:3000/getchats?roomname=${params.id}`)
+          const data = await res.json()
+          var userid: string
+          var temp: { chats: any[], params: string, userid: number } = { chats: data, params: params.id!, userid: -1 }
+          if (localStorage.getItem('userid')) {
+            userid = localStorage.getItem('userid')!
+            temp.userid = Number(userid)
+
+          }
+          console.log(data)
+          return temp;
         }
       }
     ]

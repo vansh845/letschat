@@ -7,16 +7,17 @@ import { useLoaderData } from "react-router-dom";
 
 type message = {
     message: string,
-    timeStamp: number,
-    roomid: string,
+    username: string,
+    roomname: string,
     type: "recieved" | "sent" | "initial",
     rooms: string[]
 }
 
 
 export default function Chat() {
-    const { params } = useLoaderData() as { params: string };
+    const { chats, params, userid } = useLoaderData() as { chats: any[], params: string, userid: number };
     const [data, setData] = useState<message[]>([]);
+    const [user, _] = useState(localStorage.getItem('username')!)
     const [isClosed, setIsClosed] = useState(false);
     const socketRef = useRef<WebSocket | null>(null);
     useEffect(() => {
@@ -27,7 +28,7 @@ export default function Chat() {
             console.log("connection established")
             if (localStorage.getItem('rooms') != null) {
                 const rooms = JSON.parse(localStorage.getItem('rooms')!) as string[]
-                const initialMessage: message = { message: "", roomid: "", rooms: rooms, timeStamp: Date.now(), type: "initial" }
+                const initialMessage: message = { message: "", username: user, roomname: "", rooms: rooms, type: "initial" }
                 socketRef.current?.send(JSON.stringify(initialMessage))
             }
         }
@@ -43,6 +44,10 @@ export default function Chat() {
 
     }, [])
 
+    useEffect(() => {
+        console.log(data)
+    }, [data])
+
     const [messageBox, setMessageBox] = useState("");
     function handleMessageChange(e: ChangeEvent<HTMLInputElement>) {
         setMessageBox(e.target.value);
@@ -50,7 +55,7 @@ export default function Chat() {
 
     function sendMessage(e: MouseEvent<HTMLFormElement>) {
         e.preventDefault();
-        const temp: message = { message: messageBox, roomid: params, timeStamp: Date.now(), type: "sent", rooms: [] };
+        const temp: message = { message: messageBox, username: user, roomname: params, type: "sent", rooms: [] };
         setData(prev => [...prev, temp]);
         socketRef.current?.send(JSON.stringify(temp));
         setMessageBox("");
@@ -88,7 +93,8 @@ export default function Chat() {
             </div>
             <div className="flex-1 overflow-auto p-4">
                 <div className="grid gap-4">
-                    {data.filter(message => message.roomid == params).map((message, i) => message.type == "recieved" ? <ReceivedMessage key={i} message={message.message} /> : <SentMessage key={i} message={message.message} />)}
+                    {chats.map(chat => chat[1] == userid ? <SentMessage message={chat[0]} /> : <ReceivedMessage message={chat[0]} />)}
+                    {data.filter(message => message.roomname == params).map((message, i) => message.type == "recieved" ? <ReceivedMessage key={i} message={message.message} /> : <SentMessage key={i} message={message.message} />)}
                 </div>
                 {isClosed ? <p className="mt-2 text-center text-sm text-muted-foreground">Connection ended, please reload.</p> : ""}
             </div>
