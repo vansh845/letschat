@@ -27,6 +27,10 @@ func main() {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 	defer pool.Close()
+	err = pool.Ping(context.Background())
+	if err != nil {
+		log.Println(err.Error())
+	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {

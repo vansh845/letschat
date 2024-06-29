@@ -1,13 +1,14 @@
 package server
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -49,8 +50,48 @@ func Start(port string, db *pgxpool.Pool, awsClient *s3.Client) {
 	e.GET("/ping", handlePing(db))
 	e.GET("/getchats", handleGetChats(db))
 	e.GET("/getuserid", handleGetUserId(db))
+	e.POST("/uploadmedia", handleUploadMedia(db, awsClient))
 
 	e.Logger.Fatal(e.Start(port))
+}
+
+func handleUploadMedia(_ *pgxpool.Pool, _ *s3.Client) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// if c.Request().Header.Get("Content-Type") == "image/*"{
+		// 	_ , err := awsClient.PutObject(context.Background(),&s3.PutObjectInput{
+		// 		Bucket: aws.String("odinxletschatmultimedia"),
+		// 		Body: c.Request().Body,
+		// 	})
+		// 	if err != nil{
+		// 		fmt.Println(err.Error())
+		// 		return c.String(500,err.Error())
+		// 	}
+		// }
+		file, err := os.Create("temp.png")
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		r := bufio.NewReader(c.Request().Body)
+		w := bufio.NewWriter(file)
+		var buff []byte = make([]byte, 2048)
+		for {
+			n, err := r.Read(buff)
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				fmt.Println(err.Error())
+			}
+
+			_, err = w.Write(buff[:n])
+			if err != nil {
+				break
+			}
+
+		}
+		w.Flush()
+		return nil
+	}
 }
 
 func handleGetUserId(db *pgxpool.Pool) echo.HandlerFunc {
@@ -189,15 +230,6 @@ func handleChat(db *pgxpool.Pool, awsClient *s3.Client) echo.HandlerFunc {
 				err = txn.Commit(ctx)
 				if err != nil {
 					log.Println(err)
-				}
-
-			} else if clientMessage.Type == "image" {
-				ctx := context.Background()
-				_, err := awsClient.PutObject(ctx, &s3.PutObjectInput{
-					Bucket: aws.String(os.Getenv("odinxletschatmultimedia")),
-				})
-				if err != nil {
-					log.Println(err.Error())
 				}
 
 			} else {

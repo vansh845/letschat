@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { ChangeEvent, MouseEvent, useEffect, useRef, useState } from "react"
+import { ChangeEvent, EventHandler, MouseEvent, useEffect, useRef, useState } from "react"
 import { MoveHorizontalIcon, PaperclipIcon, SearchIcon, SendIcon } from "./ui/icons";
 import { Input } from "./ui/input";
 import { useLoaderData } from "react-router-dom";
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Label } from "./ui/label";
+import FileUpload from "./fileupload";
 
 type message = {
     message: string,
@@ -15,8 +18,9 @@ type message = {
 
 
 export default function Chat() {
-    const { chats, params, userid } = useLoaderData() as { chats: any[], params: string, userid: number };
+    const { chats, params, userid } = useLoaderData() as { chats: any[] | null, params: string, userid: number };
     const [data, setData] = useState<message[]>([]);
+    const [openFileComp, setOpenFileComp] = useState(false);
     const [user, _] = useState(localStorage.getItem('username')!)
     const [isClosed, setIsClosed] = useState(false);
     const socketRef = useRef<WebSocket | null>(null);
@@ -62,6 +66,10 @@ export default function Chat() {
 
     }
 
+    async function handleMediaUpload(_: MouseEvent<HTMLButtonElement>) {
+        setOpenFileComp(true)
+    }
+
     return (
 
         <div className="flex flex-col">
@@ -81,10 +89,15 @@ export default function Chat() {
                         <SearchIcon className="h-5 w-5" />
                         <span className="sr-only">Search</span>
                     </Button>
-                    <Button variant="ghost" size="icon">
+                    <Button onClick={handleMediaUpload} variant="ghost" size="icon">
                         <PaperclipIcon className="h-5 w-5" />
                         <span className="sr-only">Attach</span>
                     </Button>
+                    <Dialog open={openFileComp} onOpenChange={setOpenFileComp}>
+                        <DialogContent>
+                            <FileUpload />
+                        </DialogContent>
+                    </Dialog>
                     <Button variant="ghost" size="icon">
                         <MoveHorizontalIcon className="h-5 w-5" />
                         <span className="sr-only">More</span>
@@ -93,7 +106,7 @@ export default function Chat() {
             </div>
             <div className="flex-1 overflow-auto p-4">
                 <div className="grid gap-4">
-                    {chats.map(chat => chat[1] == userid ? <SentMessage message={chat[0]} /> : <ReceivedMessage message={chat[0]} />)}
+                    {chats?.map(chat => chat[1] == userid ? <SentMessage message={chat[0]} /> : <ReceivedMessage message={chat[0]} />)}
                     {data.filter(message => message.roomname == params).map((message, i) => message.type == "recieved" ? <ReceivedMessage key={i} message={message.message} /> : <SentMessage key={i} message={message.message} />)}
                 </div>
                 {isClosed ? <p className="mt-2 text-center text-sm text-muted-foreground">Connection ended, please reload.</p> : ""}
