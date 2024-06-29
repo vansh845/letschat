@@ -22,15 +22,12 @@ var (
 
 func main() {
 	var connString = fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, host, port, dbname)
+	fmt.Println(connString)
 	pool, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 	defer pool.Close()
-	err = pool.Ping(context.Background())
-	if err != nil {
-		log.Println(err.Error())
-	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {

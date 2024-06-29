@@ -18,9 +18,13 @@ export default function FileUpload() {
         e.preventDefault();
         var res
         if (file) {
+            const formdata = new FormData();
+            formdata.append("filename", file.name)
+            formdata.append("file", file)
             res = await fetch("http://localhost:3000/uploadmedia", {
                 method: "post",
-                body: file
+                body: formdata,
+
             })
         }
         const url = await res?.text()

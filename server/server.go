@@ -1,14 +1,14 @@
 package server
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
+	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -16,6 +16,11 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
+
+type errWriter struct {
+	w   io.Writer
+	err error
+}
 
 type Message struct {
 	UserName string   `json:"username"`
@@ -37,10 +42,11 @@ var connectionPool map[string][]*websocket.Conn = make(map[string][]*websocket.C
 func Start(port string, db *pgxpool.Pool, awsClient *s3.Client) {
 
 	e := echo.New()
+	e.Use(middleware.CORS())
+	// e.Use(middleware.Logger())
+
 	e.Static("/app", "ui/dist")
 	e.Static("/assets", "ui/dist/assets")
-	e.Use(middleware.CORS())
-	e.Use(middleware.Logger())
 	e.GET("/", func(c echo.Context) error {
 		http.Redirect(c.Response(), c.Request(), "/app", http.StatusPermanentRedirect)
 		return nil
@@ -51,46 +57,64 @@ func Start(port string, db *pgxpool.Pool, awsClient *s3.Client) {
 	e.GET("/getchats", handleGetChats(db))
 	e.GET("/getuserid", handleGetUserId(db))
 	e.POST("/uploadmedia", handleUploadMedia(db, awsClient))
-
+	fmt.Println("started server")
 	e.Logger.Fatal(e.Start(port))
 }
 
-func handleUploadMedia(_ *pgxpool.Pool, _ *s3.Client) echo.HandlerFunc {
+func handleUploadMedia(db *pgxpool.Pool, awsClient *s3.Client) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// if c.Request().Header.Get("Content-Type") == "image/*"{
-		// 	_ , err := awsClient.PutObject(context.Background(),&s3.PutObjectInput{
-		// 		Bucket: aws.String("odinxletschatmultimedia"),
-		// 		Body: c.Request().Body,
-		// 	})
-		// 	if err != nil{
-		// 		fmt.Println(err.Error())
-		// 		return c.String(500,err.Error())
-		// 	}
+
+		// file, err := os.Create("temp.png")
+		// if err != nil {
+		// 	fmt.Println(err.Error())
 		// }
-		file, err := os.Create("temp.png")
+
+		// r := bufio.NewReader(fd)
+		// w := bufio.NewWriter(file)
+		// var buff []byte = make([]byte, 2048)
+		// for {
+		// 	n, err := r.Read(buff)
+		// 	if err != nil {
+		// 		if err == io.EOF {
+		// 			break
+		// 		}
+		// 		fmt.Println(err.Error())
+		// 	}
+
+		// 	_, err = w.Write(buff[:n])
+		// 	if err != nil {
+		// 		break
+		// 	}
+
+		// }
+		// w.Flush()
+		fileHeader, err := c.FormFile("file")
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err)
+			c.String(http.StatusNoContent, fmt.Sprintf("send file, %s", err.Error()))
 		}
-		r := bufio.NewReader(c.Request().Body)
-		w := bufio.NewWriter(file)
-		var buff []byte = make([]byte, 2048)
-		for {
-			n, err := r.Read(buff)
+		fd, err := fileHeader.Open()
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+		}
+		fmt.Println(c.Request().Header.Get("Content-Type"))
+		contentType := c.Request().Header.Get("Content-Type")
+		key := c.FormValue("filename")
+		if strings.HasPrefix(contentType, "multipart/form-data") {
+			_, err := awsClient.PutObject(context.Background(), &s3.PutObjectInput{
+				Bucket: aws.String("odinxletschatmultimedia"),
+				Body:   fd,
+				Key:    aws.String(key),
+			})
 			if err != nil {
-				if err == io.EOF {
-					break
-				}
 				fmt.Println(err.Error())
+				return c.String(500, fmt.Sprintf("something went wrong, %s", err.Error()))
 			}
-
-			_, err = w.Write(buff[:n])
-			if err != nil {
-				break
-			}
+			return c.String(200, "file uploaded")
 
 		}
-		w.Flush()
-		return nil
+		return c.String(500, "something went wrong")
+
 	}
 }
 
