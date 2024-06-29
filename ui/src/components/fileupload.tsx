@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ChangeEvent, FormEvent, useEffect, useState } from "react"
 
-export default function FileUpload() {
+export default function FileUpload({ setUrl, setOpenFile }: { setUrl: React.Dispatch<React.SetStateAction<string>>, setOpenFile: React.Dispatch<React.SetStateAction<boolean>> }) {
 
     const [file, setFile] = useState<File | null>(null);
     const [wait, setWait] = useState(true);
@@ -24,11 +24,13 @@ export default function FileUpload() {
             res = await fetch("http://localhost:3000/uploadmedia", {
                 method: "post",
                 body: formdata,
-
             })
         }
-        const url = await res?.text()
-        console.log(url)
+        if (res?.status == 200) {
+            const url = await res?.text()
+            setUrl(url)
+            setOpenFile(false)
+        }
     }
     function handleFile(e: ChangeEvent<HTMLInputElement>) {
         if (e.target.files && e.target.files?.length > 0) {

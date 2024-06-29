@@ -1,18 +1,17 @@
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { ChangeEvent, EventHandler, MouseEvent, useEffect, useRef, useState } from "react"
+import { ChangeEvent, MouseEvent, useEffect, useRef, useState } from "react"
 import { MoveHorizontalIcon, PaperclipIcon, SearchIcon, SendIcon } from "./ui/icons";
 import { Input } from "./ui/input";
 import { useLoaderData } from "react-router-dom";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Label } from "./ui/label";
+import { Dialog, DialogContent } from "./ui/dialog";
 import FileUpload from "./fileupload";
 
 type message = {
     message: string,
     username: string,
     roomname: string,
-    type: "recieved" | "sent" | "initial",
+    type: "recieved" | "sent" | "initial" | "file",
     rooms: string[]
 }
 
@@ -20,6 +19,7 @@ type message = {
 export default function Chat() {
     const { chats, params, userid } = useLoaderData() as { chats: any[] | null, params: string, userid: number };
     const [data, setData] = useState<message[]>([]);
+    const [fileUrl, setFileUrl] = useState("");
     const [openFileComp, setOpenFileComp] = useState(false);
     const [user, _] = useState(localStorage.getItem('username')!)
     const [isClosed, setIsClosed] = useState(false);
@@ -48,9 +48,6 @@ export default function Chat() {
 
     }, [])
 
-    useEffect(() => {
-        console.log(data)
-    }, [data])
 
     const [messageBox, setMessageBox] = useState("");
     function handleMessageChange(e: ChangeEvent<HTMLInputElement>) {
@@ -69,6 +66,20 @@ export default function Chat() {
     async function handleMediaUpload(_: MouseEvent<HTMLButtonElement>) {
         setOpenFileComp(true)
     }
+
+    useEffect(() => {
+        if (socketRef.current && socketRef.current.OPEN == 1) {
+
+            const temp: message = { message: fileUrl, username: user, roomname: params, type: "file", rooms: [] };
+            setData(prev => [...prev, temp]);
+            // socketRef.current?.send(JSON.stringify(temp));
+            setMessageBox("");
+        }
+    }, [fileUrl])
+
+    useEffect(() => {
+        console.log(data)
+    }, [])
 
     return (
 
@@ -95,7 +106,7 @@ export default function Chat() {
                     </Button>
                     <Dialog open={openFileComp} onOpenChange={setOpenFileComp}>
                         <DialogContent>
-                            <FileUpload />
+                            <FileUpload setUrl={setFileUrl} setOpenFile={setOpenFileComp} />
                         </DialogContent>
                     </Dialog>
                     <Button variant="ghost" size="icon">
@@ -107,7 +118,7 @@ export default function Chat() {
             <div className="flex-1 overflow-auto p-4">
                 <div className="grid gap-4">
                     {chats?.map(chat => chat[1] == userid ? <SentMessage message={chat[0]} /> : <ReceivedMessage message={chat[0]} />)}
-                    {data.filter(message => message.roomname == params).map((message, i) => message.type == "recieved" ? <ReceivedMessage key={i} message={message.message} /> : <SentMessage key={i} message={message.message} />)}
+                    {data.filter(message => message.roomname == params).map((message, i) => message.type == "recieved" ? <ReceivedMessage key={i} message={message} /> : <SentMessage key={i} message={message} />)}
                 </div>
                 {isClosed ? <p className="mt-2 text-center text-sm text-muted-foreground">Connection ended, please reload.</p> : ""}
             </div>
@@ -129,7 +140,21 @@ export default function Chat() {
     )
 }
 
-function ReceivedMessage({ message }: { message: string }) {
+function ReceivedMessage({ message }: { message: message }) {
+    if (message.type == "file") {
+        return (
+            <div className="flex justify-end items-start gap-3">
+                <div className="rounded-lg bg-primary p-3 text-sm text-primary-foreground">
+                    <img className="w-1/4" src={message.message} alt="file" />
+                    <p className="text-xs text-muted-foreground">2:32 PM</p>
+                </div>
+                <Avatar className="h-8 w-8 border">
+                    <AvatarImage src="/placeholder-user.jpg" />
+                    <AvatarFallback>AC</AvatarFallback>
+                </Avatar>
+            </div>
+        )
+    }
     return (
         <div className="flex items-start gap-3">
             <Avatar className="h-8 w-8 border">
@@ -137,18 +162,32 @@ function ReceivedMessage({ message }: { message: string }) {
                 <AvatarFallback>JD</AvatarFallback>
             </Avatar>
             <div className="rounded-lg bg-muted p-3 text-sm">
-                <p>{message}</p>
+                <p>{message.message}</p>
                 <p className="text-xs text-muted-foreground">2:30 PM</p>
             </div>
         </div>
     )
 }
 
-function SentMessage({ message }: { message: string }) {
+function SentMessage({ message }: { message: message }) {
+    if (message.type == "file") {
+        return (
+            <div className="flex justify-end items-start gap-3">
+                <div className="rounded-lg bg-primary p-3 text-sm text-primary-foreground">
+                    <img src={message.message} alt="file" />
+                    <p className="text-xs text-muted-foreground">2:32 PM</p>
+                </div>
+                <Avatar className="h-8 w-8 border">
+                    <AvatarImage src="/placeholder-user.jpg" />
+                    <AvatarFallback>AC</AvatarFallback>
+                </Avatar>
+            </div>
+        )
+    }
     return (
         <div className="flex justify-end items-start gap-3">
             <div className="rounded-lg bg-primary p-3 text-sm text-primary-foreground">
-                <p>{message}</p>
+                <p>{message.message}</p>
                 <p className="text-xs text-muted-foreground">2:32 PM</p>
             </div>
             <Avatar className="h-8 w-8 border">

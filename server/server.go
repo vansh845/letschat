@@ -97,20 +97,30 @@ func handleUploadMedia(db *pgxpool.Pool, awsClient *s3.Client) echo.HandlerFunc 
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 		}
-		fmt.Println(c.Request().Header.Get("Content-Type"))
-		contentType := c.Request().Header.Get("Content-Type")
-		key := c.FormValue("filename")
-		if strings.HasPrefix(contentType, "multipart/form-data") {
+		ct := c.Request().Header.Get("Content-Type")
+		if strings.HasPrefix(ct, "multipart/form-data") {
+			objectKey := c.FormValue("filename")
 			_, err := awsClient.PutObject(context.Background(), &s3.PutObjectInput{
 				Bucket: aws.String("odinxletschatmultimedia"),
 				Body:   fd,
-				Key:    aws.String(key),
+				Key:    aws.String(objectKey),
 			})
 			if err != nil {
 				fmt.Println(err.Error())
 				return c.String(500, fmt.Sprintf("something went wrong, %s", err.Error()))
 			}
-			return c.String(200, "file uploaded")
+			preSignClient := s3.NewPresignClient(awsClient)
+
+			preSignReq, err := preSignClient.PresignGetObject(context.Background(), &s3.GetObjectInput{
+				Bucket: aws.String("odinxletschatmultimedia"),
+				Key:    aws.String(objectKey),
+			})
+			if err != nil {
+				c.String(500, err.Error())
+			}
+			fmt.Println(preSignReq.URL)
+
+			return c.String(200, preSignReq.URL)
 
 		}
 		return c.String(500, "something went wrong")

@@ -29,7 +29,7 @@ func main() {
 	}
 	defer pool.Close()
 
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("ap-south-1"))
 	if err != nil {
 		log.Fatal(err)
 	}
