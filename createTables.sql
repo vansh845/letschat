@@ -15,6 +15,7 @@ CREATE TABLE messages (
     text TEXT NOT NULL,
     sender_id INT NOT NULL,
     room_id INT,
+    message_type TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(sender_id) REFERENCES users(id),
     FOREIGN KEY(room_id) REFERENCES rooms(id)

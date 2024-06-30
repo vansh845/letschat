@@ -52,16 +52,16 @@ func Start(port string, db *pgxpool.Pool, awsClient *s3.Client) {
 		return nil
 	})
 	e.GET("/register", handleRegisterUser(db))
-	e.GET("/chat", handleChat(db, awsClient))
+	e.GET("/chat", handleChat(db))
 	e.GET("/ping", handlePing(db))
 	e.GET("/getchats", handleGetChats(db))
 	e.GET("/getuserid", handleGetUserId(db))
-	e.POST("/uploadmedia", handleUploadMedia(db, awsClient))
+	e.POST("/uploadmedia", handleUploadMedia(awsClient))
 	fmt.Println("started server")
 	e.Logger.Fatal(e.Start(port))
 }
 
-func handleUploadMedia(db *pgxpool.Pool, awsClient *s3.Client) echo.HandlerFunc {
+func handleUploadMedia(awsClient *s3.Client) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		// file, err := os.Create("temp.png")
@@ -109,18 +109,9 @@ func handleUploadMedia(db *pgxpool.Pool, awsClient *s3.Client) echo.HandlerFunc 
 				fmt.Println(err.Error())
 				return c.String(500, fmt.Sprintf("something went wrong, %s", err.Error()))
 			}
-			preSignClient := s3.NewPresignClient(awsClient)
+			publicURL := fmt.Sprintf("https://odinxletschatmultimedia.s3.ap-south-1.amazonaws.com/%s", objectKey)
 
-			preSignReq, err := preSignClient.PresignGetObject(context.Background(), &s3.GetObjectInput{
-				Bucket: aws.String("odinxletschatmultimedia"),
-				Key:    aws.String(objectKey),
-			})
-			if err != nil {
-				c.String(500, err.Error())
-			}
-			fmt.Println(preSignReq.URL)
-
-			return c.String(200, preSignReq.URL)
+			return c.String(200, publicURL)
 
 		}
 		return c.String(500, "something went wrong")
@@ -147,7 +138,7 @@ func handleGetChats(db *pgxpool.Pool) echo.HandlerFunc {
 		var q string
 		if userName != "" {
 			params = append(params, userName)
-			q = `select m.text, m.sender_id, m.room_id, m.created_at
+			q = `select m.text, m.sender_id, m.room_id, m.created_at, m.message_type
 			from messages m
 			join rooms r on r.id = m.room_id 
 			join users u on u.id = m.sender_id
@@ -156,7 +147,7 @@ func handleGetChats(db *pgxpool.Pool) echo.HandlerFunc {
 		}
 		if roomName != "" {
 			params = append(params, roomName)
-			q = `select m.text, m.sender_id, m.room_id, m.created_at
+			q = `select m.text, m.sender_id, m.room_id, m.created_at, m.message_type
 			from messages m
 			join rooms r on r.id = m.room_id 
 			join users u on u.id = m.sender_id
@@ -164,7 +155,7 @@ func handleGetChats(db *pgxpool.Pool) echo.HandlerFunc {
 			`
 		}
 		if userName != "" && roomName != "" {
-			q = `select m.text, m.sender_id, m.room_id, m.created_at
+			q = `select m.text, m.sender_id, m.room_id, m.created_at, m.message_type
 			from messages m
 			join rooms r on r.id = m.room_id 
 			join users u on u.id = m.sender_id
@@ -226,7 +217,7 @@ func handleRegisterUser(db *pgxpool.Pool) echo.HandlerFunc {
 	}
 }
 
-func handleChat(db *pgxpool.Pool, awsClient *s3.Client) echo.HandlerFunc {
+func handleChat(db *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
@@ -270,7 +261,11 @@ func handleChat(db *pgxpool.Pool, awsClient *s3.Client) echo.HandlerFunc {
 
 				newMessage := clientMessage
 				newMessage.Rooms = nil
-				newMessage.Type = "default"
+				if clientMessage.Type == "file" {
+					newMessage.Type = "file"
+				} else {
+					newMessage.Type = "default"
+				}
 				ctx := context.Background()
 				txn, err := db.Begin(ctx)
 				if err != nil {
@@ -278,7 +273,7 @@ func handleChat(db *pgxpool.Pool, awsClient *s3.Client) echo.HandlerFunc {
 				}
 				txn.QueryRow(ctx, "select id from users where username=$1", clientMessage.UserName).Scan(&userId)
 				txn.QueryRow(ctx, "select id from rooms where roomname=$1", clientMessage.RoomName).Scan(&roomId)
-				txn.Exec(ctx, "insert into messages(text,sender_id,room_id) values($1,$2,$3)", clientMessage.Message, userId, roomId)
+				txn.Exec(ctx, "insert into messages(text,sender_id,room_id,message_type) values($1,$2,$3,$4)", clientMessage.Message, userId, roomId, clientMessage.Type)
 				txn.Commit(ctx)
 				for _, x := range connectionPool[clientMessage.RoomName] {
 					if x.RemoteAddr() != conn.RemoteAddr() {
