@@ -43,7 +43,6 @@ func Start(port string, db *pgxpool.Pool, awsClient *s3.Client) {
 
 	e := echo.New()
 	e.Use(middleware.CORS())
-	// e.Use(middleware.Logger())
 
 	e.Static("/app", "ui/dist")
 	e.Static("/assets", "ui/dist/assets")
@@ -51,14 +50,20 @@ func Start(port string, db *pgxpool.Pool, awsClient *s3.Client) {
 		http.Redirect(c.Response(), c.Request(), "/app", http.StatusPermanentRedirect)
 		return nil
 	})
-	e.GET("/register", handleRegisterUser(db))
+	//websocket connection
 	e.GET("/chat", handleChat(db))
-	e.GET("/ping", handlePing(db))
-	e.GET("/getchats", handleGetChats(db))
-	e.GET("/getuserid", handleGetUserId(db))
-	e.POST("/uploadmedia", handleUploadMedia(awsClient))
+
+	//api
+	grp := e.Group("/api")
+
+	grp.GET("/register", handleRegisterUser(db))
+	grp.GET("/ping", handlePing(db))
+	grp.GET("/getchats", handleGetChats(db))
+	grp.GET("/getuserid", handleGetUserId(db))
+	grp.POST("/uploadmedia", handleUploadMedia(awsClient))
 	fmt.Println("started server")
 	e.Logger.Fatal(e.Start(port))
+
 }
 
 func handleUploadMedia(awsClient *s3.Client) echo.HandlerFunc {
@@ -140,7 +145,6 @@ func handleGetChats(db *pgxpool.Pool) echo.HandlerFunc {
 			params = append(params, userName)
 			q = `select m.text, m.sender_id, m.room_id, m.created_at, m.message_type
 			from messages m
-			join rooms r on r.id = m.room_id 
 			join users u on u.id = m.sender_id
 			where u.username = $1 
 			`
@@ -150,7 +154,6 @@ func handleGetChats(db *pgxpool.Pool) echo.HandlerFunc {
 			q = `select m.text, m.sender_id, m.room_id, m.created_at, m.message_type
 			from messages m
 			join rooms r on r.id = m.room_id 
-			join users u on u.id = m.sender_id
 			where r.roomname = $1
 			`
 		}
@@ -202,6 +205,7 @@ func handlePing(db *pgxpool.Pool) echo.HandlerFunc {
 			res = append(res, value...)
 
 		}
+		fmt.Println(res)
 		return e.String(200, fmt.Sprintf("%v", res))
 	}
 }

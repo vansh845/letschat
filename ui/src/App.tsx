@@ -23,7 +23,7 @@ export default function App() {
   }
 
   async function handleSaveUser(_: MouseEvent<HTMLButtonElement>) {
-    const res = await fetch(`http://localhost:3000/register?username=${userName}`, { method: "GET" })
+    const res = await fetch(`/api/register?username=${userName}`, { method: "GET" })
     const b = await res.text()
     console.log(b)
     if (b == "user registered") {

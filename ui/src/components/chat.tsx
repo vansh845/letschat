@@ -19,7 +19,7 @@ export default function Chat() {
     const socketRef = useRef<WebSocket | null>(null);
     useEffect(() => {
         if (!socketRef.current) {
-            socketRef.current = new WebSocket("http://localhost:3000/chat");
+            socketRef.current = new WebSocket("/chat");
         }
         socketRef.current.onopen = (_) => {
             console.log("connection established")
@@ -76,7 +76,7 @@ export default function Chat() {
             const formdata = new FormData();
             formdata.append("filename", file.name)
             formdata.append("file", file)
-            res = await fetch("http://localhost:3000/uploadmedia", {
+            res = await fetch("/api/uploadmedia", {
                 method: "post",
                 body: formdata,
             })
@@ -159,9 +159,9 @@ export default function Chat() {
             <div className="flex-1 overflow-auto p-4">
                 <div className="grid gap-4">
                     {/* chats from database */}
-                    {chats?.map(chat => chat[1] == userid ? <SentMessage message={chat[0]} type={chat[4]} /> : <ReceivedMessage message={chat[0]} type={chat[4]} />)}
+                    {chats?.map(chat => chat[1] == userid ? <SentMessage message={chat[0]} type={chat[4]} user={localStorage.getItem('username')!} /> : <ReceivedMessage message={chat[0]} type={chat[4]} sender={"Anonymous"} />)}
                     {/* chats in memory */}
-                    {data.filter(message => message.roomname == params).map((message, i) => message.username != user ? <ReceivedMessage key={i} message={message.message} type={message.type} /> : <SentMessage key={i} message={message.message} type={message.type} />)}
+                    {data.filter(message => message.roomname == params).map((message, i) => message.username != user ? <ReceivedMessage key={i} message={message.message} type={message.type} sender="Anonymous" /> : <SentMessage key={i} message={message.message} type={message.type} user={localStorage.getItem("username")!} />)}
                 </div>
                 {isClosed ? <p className="mt-2 text-center text-sm text-muted-foreground">Connection ended, please reload.</p> : ""}
                 <div ref={messageEndRef}></div>
@@ -184,14 +184,14 @@ export default function Chat() {
     )
 }
 
-function ReceivedMessage({ message, type }: { message: string, type: string }) {
+function ReceivedMessage({ message, type, sender }: { message: string, type: string, sender: string }) {
     console.log(type)
     if (type == "file") {
         return (
             <div className="flex items-start gap-3">
                 <Avatar className="h-8 w-8 border">
                     <AvatarImage src="/placeholder-user.jpg" />
-                    <AvatarFallback>JD</AvatarFallback>
+                    <AvatarFallback>{sender[1].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="rounded-lg bg-muted p-3 text-sm w-80">
                     <img src={message} />
@@ -204,7 +204,7 @@ function ReceivedMessage({ message, type }: { message: string, type: string }) {
         <div className="flex items-start gap-3">
             <Avatar className="h-8 w-8 border">
                 <AvatarImage src="/placeholder-user.jpg" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarFallback>{sender[1].toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="rounded-lg bg-muted p-3 text-sm">
                 <p>{message}</p>
@@ -214,7 +214,7 @@ function ReceivedMessage({ message, type }: { message: string, type: string }) {
     )
 }
 
-function SentMessage({ message, type }: { message: string, type: string }) {
+function SentMessage({ message, type, user }: { message: string, type: string, user: string }) {
     if (type == "file") {
         return (
             <div className="flex justify-end items-start gap-3 ">
@@ -224,7 +224,7 @@ function SentMessage({ message, type }: { message: string, type: string }) {
                 </div>
                 <Avatar className="h-8 w-8 border">
                     <AvatarImage src="/placeholder-user.jpg" />
-                    <AvatarFallback>AC</AvatarFallback>
+                    <AvatarFallback>{user[1].toUpperCase()}</AvatarFallback>
                 </Avatar>
             </div>
         )
@@ -237,7 +237,7 @@ function SentMessage({ message, type }: { message: string, type: string }) {
             </div>
             <Avatar className="h-8 w-8 border">
                 <AvatarImage src="/placeholder-user.jpg" />
-                <AvatarFallback>AC</AvatarFallback>
+                <AvatarFallback>{user[1].toUpperCase()}</AvatarFallback>
             </Avatar>
         </div>
     )
