@@ -1,6 +1,7 @@
 version: '1'
 services:
   backend:
+    restart: always
     build:
       context: .
       dockerfile: ./docker/backend/Dockerfile
@@ -10,8 +11,10 @@ services:
       - db
 
   db:
+    restart: always
     build:
       context: .
       dockerfile: ./docker/db/Dockerfile
     ports:
       - "5432:5432"
+    
