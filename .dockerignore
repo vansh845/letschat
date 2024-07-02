@@ -5,10 +5,8 @@
 # https://docs.docker.com/engine/reference/builder/#dockerignore-file
 
 
-/ui
 /tmp
 .air.toml
-
 
 **/.DS_Store
 **/.classpath
@@ -36,3 +34,4 @@
 **/values.dev.yaml
 LICENSE
 README.md
+**/README.md
