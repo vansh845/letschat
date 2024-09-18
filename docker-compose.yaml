@@ -9,7 +9,13 @@ services:
       - "3000:3000"
     depends_on:
       - db
-
+  frontend:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./docker/frontend/Dockerfile
+    ports:
+      - "8080:5173"
   db:
     restart: always
     build:

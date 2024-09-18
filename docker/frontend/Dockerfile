@@ -1,10 +1,6 @@
-FROM oven/bun:latest
-
+FROM oven/bun:1 AS base
 WORKDIR /app
-
-COPY package.json ./
-COPY bun.lockb ./
-COPY src ./
-
+COPY ./ui /app/
 RUN bun install
+EXPOSE 5173
 CMD [ "bun", "dev" ]
