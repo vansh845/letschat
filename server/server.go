@@ -44,12 +44,6 @@ func Start(port string, db *pgxpool.Pool, awsClient *s3.Client) {
 	e := echo.New()
 	e.Use(middleware.CORS())
 
-	e.Static("/app", "ui/dist")
-	e.Static("/assets", "ui/dist/assets")
-	e.GET("/", func(c echo.Context) error {
-		http.Redirect(c.Response(), c.Request(), "/app", http.StatusPermanentRedirect)
-		return nil
-	})
 	//websocket connection
 	e.GET("/chat", handleChat(db))
 
