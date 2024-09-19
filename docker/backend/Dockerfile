@@ -6,7 +6,6 @@ COPY go.sum ./
 COPY go.mod ./
 COPY server ./server
 COPY start_server.sh ./
-COPY ui/dist ./ui/dist
 
 EXPOSE 3000
 
