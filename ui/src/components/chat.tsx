@@ -19,7 +19,7 @@ export default function Chat() {
     const socketRef = useRef<WebSocket | null>(null);
     useEffect(() => {
         if (!socketRef.current) {
-            socketRef.current = new WebSocket("http://localhost:3000/chat");
+            socketRef.current = new WebSocket("http://backend:3000/chat");
         }
         socketRef.current.onopen = (_) => {
             console.log("connection established")
@@ -76,7 +76,7 @@ export default function Chat() {
             const formdata = new FormData();
             formdata.append("filename", file.name)
             formdata.append("file", file)
-            res = await fetch("http://localhost:3000/api/uploadmedia", {
+            res = await fetch("http://backend:3000/api/uploadmedia", {
                 method: "post",
                 body: formdata,
             })

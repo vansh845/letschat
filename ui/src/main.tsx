@@ -23,7 +23,7 @@ const router = createBrowserRouter([
       }
       if (localStorage.getItem("username")) {
         res.userName = true
-        const temp = await fetch(`http://localhost:3000/api/getuserid?username=${localStorage.getItem("username")}`);
+        const temp = await fetch(`http://backend:3000/api/getuserid?username=${localStorage.getItem("username")}`);
         if (temp.status == 200) {
           const userid = await temp.text()
           res.userId = Number(userid)
@@ -38,7 +38,7 @@ const router = createBrowserRouter([
         path: "chat/:id",
         element: <Chat />,
         loader: async function ({ params }) {
-          const res = await fetch(`http://localhost:3000/api/getchats?roomname=${params.id}`)
+          const res = await fetch(`http://backend:3000/api/getchats?roomname=${params.id}`)
           const data = await res.json()
           var userid: string
           var temp: { chats: any[], params: string, userid: number } = { chats: data, params: params.id!, userid: -1 }
