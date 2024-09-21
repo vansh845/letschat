@@ -3,4 +3,4 @@ WORKDIR /app
 COPY ./ui /app/
 RUN bun install
 EXPOSE 5173
-CMD [ "bun", "dev" ]
+CMD [ "bun", "dev"]

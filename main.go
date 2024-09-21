@@ -37,6 +37,6 @@ func main() {
 	// Create an Amazon S3 service client
 	awsClient := s3.NewFromConfig(cfg)
 
-	server.Start(":3000", pool, awsClient)
+	server.Start("3000", pool, awsClient)
 
 }

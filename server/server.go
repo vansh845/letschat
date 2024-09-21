@@ -56,7 +56,7 @@ func Start(port string, db *pgxpool.Pool, awsClient *s3.Client) {
 	grp.GET("/getuserid", handleGetUserId(db))
 	grp.POST("/uploadmedia", handleUploadMedia(awsClient))
 	fmt.Println("started server")
-	e.Logger.Fatal(e.Start(port))
+	e.Logger.Fatal(e.Start("0.0.0.0:3000"))
 
 }
 
@@ -217,6 +217,9 @@ func handleRegisterUser(db *pgxpool.Pool) echo.HandlerFunc {
 
 func handleChat(db *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
+    for k, v := range c.Request().Header{
+      fmt.Printf("%s - %q\n",k,v)
+    }
 		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			log.Println(err)
@@ -231,8 +234,8 @@ func handleChat(db *pgxpool.Pool) echo.HandlerFunc {
 
 			err = conn.ReadJSON(&clientMessage)
 			if err != nil {
-				log.Println(err)
-				return nil
+        log.Printf("err : %q",err)
+				return err
 			}
 			fmt.Println(clientMessage)
 			userName := clientMessage.UserName

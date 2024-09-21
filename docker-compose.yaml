@@ -16,6 +16,8 @@ services:
       dockerfile: ./docker/frontend/Dockerfile
     ports:
       - "8080:5173"
+    depends_on:
+      - backend
   db:
     restart: always
     build:
@@ -23,4 +25,14 @@ services:
       dockerfile: ./docker/db/Dockerfile
     ports:
       - "5432:5432"
+  reverse_proxy:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./docker/reverse_proxy/Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
     
