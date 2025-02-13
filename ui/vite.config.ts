@@ -22,6 +22,7 @@ export default defineConfig({
       '/api':{
         target : 'http://backend:3000',
         changeOrigin : true,
+        ws : true,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
             console.log('proxy error', err);

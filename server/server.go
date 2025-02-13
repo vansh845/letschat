@@ -217,9 +217,9 @@ func handleRegisterUser(db *pgxpool.Pool) echo.HandlerFunc {
 
 func handleChat(db *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
-    for k, v := range c.Request().Header{
-      fmt.Printf("%s - %q\n",k,v)
-    }
+		for k, v := range c.Request().Header {
+			fmt.Printf("%s - %q\n", k, v)
+		}
 		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			log.Println(err)
@@ -234,7 +234,7 @@ func handleChat(db *pgxpool.Pool) echo.HandlerFunc {
 
 			err = conn.ReadJSON(&clientMessage)
 			if err != nil {
-        log.Printf("err : %q",err)
+				log.Printf("err : %q", err)
 				return err
 			}
 			fmt.Println(clientMessage)

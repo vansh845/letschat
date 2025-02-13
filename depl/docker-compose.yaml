@@ -1,0 +1,18 @@
+services:
+  backend:
+    image : "odinx18/letschat-backend:latest"
+    depends_on : 
+      - db
+  frontend:
+    image: "odinx18/letschat-frontend:latest"
+    depends_on : 
+      - backend
+  db:
+    image: "odinx18/letschat-db:latest"
+  reverse_proxy:
+    image: "odinx18/letschat-reverse-proxy:latest"
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "3002:80"
